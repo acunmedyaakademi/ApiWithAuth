@@ -1,4 +1,5 @@
 using ApiWithAuth.Data;
+using ApiWithAuth.Migrations;
 using ApiWithAuth.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,25 +20,25 @@ public class TweetsController : ControllerBase
         _context = context;
     }
     
-    
     [HttpGet]
     public IActionResult Index()
     {
         return Ok("Tweet dünyasına hoş geldiniz!");
     }
 
-    [Authorize]
     [HttpGet("all")]
-    public IActionResult ListAllTweets()
+    public ActionResult<Tweet[]> ListAllTweets()
     {
-        var user = _userManager.GetUserId(User);
-        return Ok(user);
+        return _context.Tweets.ToArray();
     }
 
     [Authorize]
     [HttpPost("add")]
-    public async Task<IActionResult> AddTweet()
+    public async Task<ActionResult<Tweet>> AddTweet()
     {
+        // aslında kullanıcıyı almamıza gerek yok
+        // çünkü sadece kullanıcı id'si bizim için yeterli
+        // buna bağlı olarak mevcut login olan kullanıcıyı claims üzerinden alabiliriz
         var user = await _userManager.GetUserAsync(User);
         
         var newTweet = new Tweet()
@@ -47,8 +48,8 @@ public class TweetsController : ControllerBase
         };
         
         _context.Tweets.Add(newTweet);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         
-        return Ok(newTweet);
+        return newTweet;
     }
 }
