@@ -1,5 +1,6 @@
 using ApiWithAuth.Data;
 using ApiWithAuth.Migrations;
+using ApiWithAuth.Models.Dtos.Comment;
 using ApiWithAuth.Models.Dtos.Tweet;
 using ApiWithAuth.Models.Entities;
 using AutoMapper;
@@ -49,13 +50,47 @@ public class TweetsController : ControllerBase
     [HttpGet("{userId}/{tweetId}")]
     public ActionResult<TweetDto> GetTweetById(string userId, int tweetId)
     {
-        var tweet = _context.Tweets.Where(t => t.Id == tweetId && t.UserId == userId).Include(t => t.User)
+        var tweet = _context.Tweets
+            .Where(t => t.Id == tweetId && t.UserId == userId)
+            .Include(t => t.User)
+            .Include(t => t.Comments)
+                .ThenInclude(c => c.User)
             .FirstOrDefault();
         if (tweet == null)
         {
             return NotFound();
         }
         return  _mapper.Map<TweetDto>(tweet);
+    }
+
+    [Authorize]
+    [HttpPost("{tweetUserId}/{tweetId}/[action]")]
+    public async Task<ActionResult> AddComment(string tweetUserId, int tweetId, CommentAddDto model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        var tweet = await _context.Tweets.FindAsync(tweetId);
+        if (tweet == null)
+        {
+            return NotFound();
+        }
+
+        // bu çok elzem değil fakat adres bar ile tutarlılık olsa iyi olur
+        if (tweet.UserId != tweetUserId)
+        {
+            return BadRequest();
+        }
+        
+        var newComment = _mapper.Map<Comment>(model);
+        var userId = _userManager.GetUserId(User);
+        newComment.UserId = userId;
+        newComment.TweetId = tweetId;
+        _context.Comments.Add(newComment);
+        await _context.SaveChangesAsync();
+        return Ok();
     }
 
     [Authorize]

@@ -3,6 +3,7 @@ using System;
 using ApiWithAuth.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiWithAuth.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250419113856_Comments")]
+    partial class Comments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.4");
@@ -30,7 +33,7 @@ namespace ApiWithAuth.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("TweetId")
+                    b.Property<int?>("TweetId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
@@ -264,19 +267,15 @@ namespace ApiWithAuth.Migrations
 
             modelBuilder.Entity("ApiWithAuth.Models.Entities.Comment", b =>
                 {
-                    b.HasOne("ApiWithAuth.Models.Entities.Tweet", "Tweet")
+                    b.HasOne("ApiWithAuth.Models.Entities.Tweet", null)
                         .WithMany("Comments")
-                        .HasForeignKey("TweetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TweetId");
 
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tweet");
 
                     b.Navigation("User");
                 });

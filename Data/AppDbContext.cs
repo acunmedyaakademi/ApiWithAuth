@@ -9,6 +9,7 @@ namespace ApiWithAuth.Data;
 public class AppDbContext : IdentityDbContext<IdentityUser>
 {
     public DbSet<Tweet> Tweets { get; set; }
+    public DbSet<Comment> Comments { get; set; }
     
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
