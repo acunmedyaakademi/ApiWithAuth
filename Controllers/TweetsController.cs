@@ -36,12 +36,14 @@ public class TweetsController : ControllerBase
 
     [Authorize]
     [HttpPost("add")]
-    public IActionResult AddTweet()
+    public async Task<IActionResult> AddTweet()
     {
+        var user = await _userManager.GetUserAsync(User);
+        
         var newTweet = new Tweet()
         {
             Body = "Merhaba tweet dünyası",
-            UserId = _userManager.GetUserId(User)
+            User = user
         };
         
         _context.Tweets.Add(newTweet);
