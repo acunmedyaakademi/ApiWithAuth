@@ -81,4 +81,26 @@ public class TweetsController : ControllerBase
         
         return Ok();
     }
+
+    [Authorize]
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteTweet(int id)
+    {
+        var tweet = await _context.Tweets.FindAsync(id);
+        if (tweet == null)
+        {
+            return NotFound();
+        }
+        
+        var userId = _userManager.GetUserId(User);
+        if (tweet.UserId != userId)
+        {
+            return Unauthorized();
+        }
+        
+        _context.Tweets.Remove(tweet);
+        await _context.SaveChangesAsync();
+        
+        return Ok();
+    }
 }
