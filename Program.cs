@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using ApiWithAuth.Data;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +20,11 @@ public sealed class SlugifyParameterTransformer : IOutboundParameterTransformer
     }
 }
 
+
+
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +46,10 @@ public class Program
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.EnableAnnotations();
+        });
         
         builder.Services.AddAuthorization();
 
@@ -58,9 +64,16 @@ public class Program
         });
         
         builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
 
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            await SeedRoles(services);
+        }
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
@@ -75,10 +88,27 @@ public class Program
 
         // identity endpointlerinin başına ekleme yapmak için
         // prefix ön ek, suffix son ek
-        app.MapGroup("/user").MapIdentityApi<IdentityUser>();
-        
+        app.MapGroup("/auth").MapIdentityApi<IdentityUser>();
+
         app.MapControllers();
 
         app.Run();
     }
+    
+    public static async Task SeedRoles(IServiceProvider serviceProvider)
+    {
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    
+        if (await roleManager.RoleExistsAsync("Admin")) { return; }
+    
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+        //await roleManager.CreateAsync(new IdentityRole("User"));
+    
+        var adminUser = new IdentityUser { UserName = "admin", Email = "orhanekici@gmail.com" };
+        adminUser.EmailConfirmed = true;
+        await userManager.CreateAsync(adminUser, "P99yG-wSd8T$");
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
 }
+

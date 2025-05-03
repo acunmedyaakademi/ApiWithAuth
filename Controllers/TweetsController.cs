@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace ApiWithAuth.Controllers;
 
@@ -137,5 +138,15 @@ public class TweetsController : ControllerBase
         await _context.SaveChangesAsync();
         
         return Ok();
+    }
+
+    // eğer alt alta yazarsak iki rolde de bulunmak zorunda
+    // eğer tek satırda yazıp virgül ile ayırırsak iki rolden birinde olması yeterli demek
+    // [Authorize(Roles = "SuperUser")]
+    [Authorize(Roles = "Admin")]
+    [HttpGet("[action]")]
+    public ActionResult AdminOnly()
+    {
+        return Ok("Admin only");
     }
 }
