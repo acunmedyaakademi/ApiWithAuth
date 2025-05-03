@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using ApiWithAuth.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,7 +56,7 @@ public class Program
 
         builder.Services.Configure<IdentityOptions>(options =>
         {
-            options.SignIn.RequireConfirmedAccount = false;
+            options.SignIn.RequireConfirmedAccount = true;
             options.Password.RequiredLength = 3;
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireDigit = false;
@@ -67,6 +68,9 @@ public class Program
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
 
+        builder.Services.AddTransient<IEmailService, EmailService>();
+        builder.Services.AddTransient<IEmailSender, EmailSender>();
+        
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())
@@ -94,8 +98,8 @@ public class Program
 
         app.Run();
     }
-    
-    public static async Task SeedRoles(IServiceProvider serviceProvider)
+
+    private static async Task SeedRoles(IServiceProvider serviceProvider)
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();

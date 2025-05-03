@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Mail;
 using ApiWithAuth.Data;
 using ApiWithAuth.Migrations;
 using ApiWithAuth.Models.Dtos.Comment;
@@ -20,12 +22,14 @@ public class TweetsController : ControllerBase
     private readonly UserManager<IdentityUser> _userManager;
     private readonly AppDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
 
-    public TweetsController(UserManager<IdentityUser> userManager, AppDbContext context, IMapper mapper)
+    public TweetsController(UserManager<IdentityUser> userManager, AppDbContext context, IMapper mapper, IConfiguration configuration)
     {
         _userManager = userManager;
         _context = context;
         _mapper = mapper;
+        _configuration = configuration;
     }
     
     [HttpGet]
@@ -148,5 +152,25 @@ public class TweetsController : ControllerBase
     public ActionResult AdminOnly()
     {
         return Ok("Admin only");
+    }
+    
+    [HttpPost("[action]")]
+    public async Task<ActionResult> SendEmail()
+    {
+        var emailSettings = _configuration.GetSection("EmailSettings");
+        var client = new SmtpClient();
+        client.Host = emailSettings["Host"];
+        client.Port = emailSettings.GetValue<int>("Port");;
+        client.Credentials = new NetworkCredential(emailSettings["Username"], emailSettings["Password"]);
+        var message = new MailMessage();
+        message.To.Add(new MailAddress("orhanekici@gmail.com", "Orhan Ekici"));
+        message.From = new MailAddress(emailSettings["FromEmail"], emailSettings["FromName"]);
+        message.Subject = "Merhabalar";
+        message.Body = "Bu deneme amaçlı gönderilen bir e-postadır. Lütfen dikkate almayın.";
+        await client.SendMailAsync(message);
+
+        message.Dispose();
+        client.Dispose();
+        return Ok("E-posta gönderildi");
     }
 }
